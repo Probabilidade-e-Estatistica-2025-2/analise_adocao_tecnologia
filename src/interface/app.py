@@ -8,14 +8,11 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import seaborn as sns
-from scipy import stats as scipy_stats
 
 from src.analysis.stats import *
 from src.analysis.variable_types import VariableClassifier
 
 # Configuração visual
-sns.set_style("whitegrid")
 plt.rcParams['figure.figsize'] = (10, 5)
 
 st.set_page_config(page_title="Adoção de Tecnologias", layout="wide")
@@ -452,12 +449,28 @@ with st.expander("🔗 ANÁLISE DE CORRELAÇÃO - Variáveis Contínuas", expand
     col_corr1, col_corr2 = st.columns(2)
     
     with col_corr1:
-        st.write("**Matriz de Correlação (Heatmap)**")
+        st.write("**Matriz de Correlação**")
         fig_corr, ax_corr = plt.subplots(figsize=(8, 6))
         corr_matrix = df_filtro[numeric_cols_for_corr].corr()
-        sns.heatmap(corr_matrix, annot=True, fmt=".2f", cmap="coolwarm", center=0, 
-                   square=True, ax=ax_corr, cbar_kws={"label": "Correlação"})
+        
+        # Criar heatmap manual com matplotlib (sem seaborn)
+        im = ax_corr.imshow(corr_matrix.values, cmap="coolwarm", aspect="auto", vmin=-1, vmax=1)
+        
+        # Configurar labels
+        ax_corr.set_xticks(range(len(corr_matrix.columns)))
+        ax_corr.set_yticks(range(len(corr_matrix.columns)))
+        ax_corr.set_xticklabels(corr_matrix.columns, rotation=45, ha="right", fontsize=9)
+        ax_corr.set_yticklabels(corr_matrix.columns, fontsize=9)
+        
+        # Adicionar valores nas células
+        for i in range(len(corr_matrix.columns)):
+            for j in range(len(corr_matrix.columns)):
+                text = ax_corr.text(j, i, f'{corr_matrix.values[i, j]:.2f}',
+                                   ha="center", va="center", color="black" if abs(corr_matrix.values[i, j]) < 0.5 else "white",
+                                   fontsize=8)
+        
         ax_corr.set_title("Matriz de Correlação de Pearson", fontweight="bold")
+        plt.colorbar(im, ax=ax_corr, label="Correlação")
         plt.tight_layout()
         st.pyplot(fig_corr)
     
