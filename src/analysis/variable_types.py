@@ -15,8 +15,6 @@ CLASSIFICAÇÃO DE VARIÁVEIS:
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import seaborn as sns
-from scipy import stats
 
 class VariableClassifier:
     """Classifica e analisa tipos de variáveis do dataset"""
