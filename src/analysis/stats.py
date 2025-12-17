@@ -1,5 +1,8 @@
+import pandas as pd
 import matplotlib.pyplot as plt
+import seaborn as sns
 
+# Variáveis Globais
 NUMERIC_COLS = [
     "Empresas_Adotantes",
     "Taxa_Adocao_Percent",
@@ -10,55 +13,110 @@ NUMERIC_COLS = [
 ]
 
 def estatistica_descritiva(df):
+    """
+    Gera tabela completa com medidas de tendência central, dispersão e forma.
+    """
+    if df.empty:
+        return pd.DataFrame()
+        
     desc = df[NUMERIC_COLS].describe().T
     desc["mediana"] = df[NUMERIC_COLS].median()
-    desc["variancia"] = df[NUMERIC_COLS].var()
-    desc["coef_var_%"] = (desc["std"] / desc["mean"]) * 100
-    return desc.round(2)
+    # Coeficiente de Variação
+    desc["CV (%)"] = (df[NUMERIC_COLS].std() / df[NUMERIC_COLS].mean()) * 100
+    # Assimetria
+    desc["skewness"] = df[NUMERIC_COLS].skew()
+    
+    # Seleção e renomeação
+    cols_final = ["count", "mean", "mediana", "std", "min", "max", "CV (%)", "skewness"]
+    return desc[cols_final].round(2)
 
-def grafico_evolucao(df, tecnologia):
-    fig, ax = plt.subplots(figsize=(4.5, 2.5))
-    ax.plot(df["Periodo"], df["Taxa_Adocao_Percent"], marker="o")
-    ax.set_title(f"Evolução da Adoção – {tecnologia}")
-    ax.set_xlabel("Período")
-    ax.set_ylabel("Taxa (%)")
+def grafico_evolucao_comparativo(df):
+    """Gráfico de linhas com todas as tecnologias juntas."""
+    fig, ax = plt.subplots(figsize=(10, 4))
+    sns.lineplot(
+        data=df, 
+        x="Periodo", 
+        y="Taxa_Adocao_Percent", 
+        hue="Tecnologia", 
+        marker="o", 
+        ax=ax,
+        palette="tab10"
+    )
+    ax.set_title("Evolução Comparativa da Adoção (2023-2025)")
+    ax.set_ylabel("Taxa de Adoção (%)")
+    ax.grid(True, linestyle='--', alpha=0.5)
     plt.xticks(rotation=45)
     return fig
 
 def histograma_adocao(df):
-    fig, ax = plt.subplots(figsize=(4.5, 2.5))
-    ax.hist(df["Taxa_Adocao_Percent"], bins=10)
-    ax.set_title("Distribuição da Taxa de Adoção")
+    """Mostra a distribuição dos dados."""
+    fig, ax = plt.subplots(figsize=(6, 4))
+    sns.histplot(df["Taxa_Adocao_Percent"], kde=True, ax=ax, color="#3498db")
+    ax.set_title("Histograma: Distribuição da Taxa de Adoção")
+    ax.set_xlabel("Taxa (%)")
     return fig
 
-def boxplot_adocao(df):
-    fig, ax = plt.subplots(figsize=(5.5, 2.5))
-    df.boxplot(column="Taxa_Adocao_Percent", by="Tecnologia", ax=ax)
-    plt.suptitle("")
+def ranking_medio_adocao(df):
+    """Mostra quem são os líderes."""
+    fig, ax = plt.subplots(figsize=(6, 4))
+    rank = df.groupby("Tecnologia")["Taxa_Adocao_Percent"].mean().sort_values(ascending=False).reset_index()
+    sns.barplot(data=rank, x="Taxa_Adocao_Percent", y="Tecnologia", ax=ax, palette="viridis")
+    ax.set_title("Ranking Médio de Adoção")
+    ax.set_xlabel("Média (%)")
+    return fig
+
+def boxplot_tempo(df):
+    """Mostra eficiência (quem é mais rápido)."""
+    fig, ax = plt.subplots(figsize=(6, 4))
+    sns.boxplot(data=df, x="Tecnologia", y="Tempo_Implementacao_Meses", ax=ax, palette="Set2")
+    ax.set_title("Boxplot: Tempo de Implementação")
+    ax.set_ylabel("Meses")
     plt.xticks(rotation=45)
     return fig
 
-def ranking_medio(df, coluna):
-    fig, ax = plt.subplots(figsize=(4.5, 2.5))
-    df.groupby("Tecnologia")[coluna].mean().sort_values().plot(kind="barh", ax=ax)
-    ax.set_title(f"Ranking Médio – {coluna}")
-    return fig
-
-def dispersao_investimento(df):
-    fig, ax = plt.subplots(figsize=(4.5, 2.5))
-    ax.scatter(df["Investimento_Milhoes"], df["Taxa_Adocao_Percent"])
-    ax.set_xlabel("Investimento (Mi)")
-    ax.set_ylabel("Taxa de Adoção (%)")
+def dispersao_satisfacao(df):
+    """Scatter plot: Satisfação x Adoção."""
+    fig, ax = plt.subplots(figsize=(6, 4))
+    sns.scatterplot(
+        data=df, 
+        x="Satisfacao_Media", 
+        y="Taxa_Adocao_Percent", 
+        hue="Tecnologia", 
+        s=100, 
+        ax=ax
+    )
+    ax.set_title("Correlação: Satisfação vs. Adoção")
+    ax.set_xlabel("Satisfação Média (Nota)")
+    ax.set_ylabel("Adoção (%)")
+    ax.grid(True)
     return fig
 
 def matriz_correlacao(df):
-    fig, ax = plt.subplots(figsize=(4.5, 3))
+    """Mapa de calor das correlações."""
+    fig, ax = plt.subplots(figsize=(6, 5))
     corr = df[NUMERIC_COLS].corr()
-    im = ax.imshow(corr)
-    ax.set_xticks(range(len(NUMERIC_COLS)))
-    ax.set_yticks(range(len(NUMERIC_COLS)))
-    ax.set_xticklabels(NUMERIC_COLS, rotation=45, ha="right")
-    ax.set_yticklabels(NUMERIC_COLS)
-    fig.colorbar(im)
-    ax.set_title("Matriz de Correlação")
+    sns.heatmap(corr, annot=True, cmap="coolwarm", fmt=".2f", ax=ax)
+    ax.set_title("Matriz de Correlação de Pearson")
     return fig
+
+def calcular_probabilidades(df):
+    """Inferência Bayesiana/Frequentista."""
+    total_obs = len(df)
+    if total_obs == 0:
+        return 0.0, 0.0
+
+    # Probabilidade Simples: P(Adoção > 40%)
+    alta_adocao = df[df['Taxa_Adocao_Percent'] > 40]
+    p_simples = len(alta_adocao) / total_obs
+    
+    # Probabilidade Condicional: P(Adoção > 40% | Investimento > Média)
+    media_inv = df['Investimento_Milhoes'].mean()
+    alto_investimento = df[df['Investimento_Milhoes'] > media_inv]
+    
+    if len(alto_investimento) > 0:
+        sucesso_com_investimento = alto_investimento[alto_investimento['Taxa_Adocao_Percent'] > 40]
+        p_condicional = len(sucesso_com_investimento) / len(alto_investimento)
+    else:
+        p_condicional = 0.0
+        
+    return p_simples, p_condicional
