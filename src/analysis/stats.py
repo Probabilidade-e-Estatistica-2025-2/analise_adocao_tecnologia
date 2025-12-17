@@ -25,7 +25,6 @@ def estatistica_descritiva(df):
     return desc[cols_final].round(2)
 
 def grafico_evolucao_comparativo(df):
-    """Gráfico de linhas com todas as tecnologias juntas."""
     fig, ax = plt.subplots(figsize=(10, 4))
     sns.lineplot(
         data=df, 
@@ -106,32 +105,3 @@ def calcular_probabilidades(df):
         p_condicional = 0.0
         
     return p_simples, p_condicional
-
-def grafico_eficiencia_custo(df):
-    metrics = df.groupby('Tecnologia')[['Taxa_Adocao_Percent', 'Investimento_Milhoes']].mean()
-    
-    metrics['Custo_por_Ponto'] = metrics['Investimento_Milhoes'] / metrics['Taxa_Adocao_Percent']
-    metrics = metrics.sort_values('Custo_por_Ponto', ascending=True).reset_index()
-
-    fig, ax = plt.subplots(figsize=(8, 5))
-    
-    sns.barplot(
-        data=metrics, 
-        x='Custo_por_Ponto', 
-        y='Tecnologia', 
-        palette='RdYlGn_r', 
-        ax=ax
-    )
-    
-    ax.set_title("Custo Médio para Conquistar 1% de Mercado (Menor é Melhor)")
-    ax.set_xlabel("Investimento (Milhões) por 1% de Adoção")
-    ax.set_ylabel("")
-    
-    for i, v in enumerate(metrics['Custo_por_Ponto']):
-        ax.text(v + 0.02, i, f"R$ {v:.2f} Mi", va='center', fontweight='bold', fontsize=10)
-        
-    val_cloud = metrics.loc[metrics['Tecnologia'] == 'Cloud_Computing', 'Custo_por_Ponto'].values[0]
-    ax.axvline(val_cloud, color='red', linestyle='--', alpha=0.5)
-    ax.text(val_cloud, len(metrics)-0.5, " Benchmark (Cloud)", color='red', va='center')
-    
-    return fig

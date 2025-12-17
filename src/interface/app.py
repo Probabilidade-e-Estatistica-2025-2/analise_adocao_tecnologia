@@ -105,27 +105,18 @@ st.markdown("---")
 st.header("3. Comparação e Eficiência")
 
 col_comp1, col_comp2 = st.columns(2)
-
 with col_comp1:
-    st.subheader("Quem domina o mercado?")
     st.pyplot(ranking_medio_adocao(df_filtro))
-    st.caption("Empate técnico entre Cloud Computing e API REST.")
-
 with col_comp2:
-    st.subheader("Quem custa menos?")
-    st.pyplot(grafico_eficiencia_custo(df_filtro))
-    st.caption("API REST é a campeã de eficiência (R$ 0,47 Mi por ponto).")
+    st.pyplot(boxplot_tempo(df_filtro))
 
-st.subheader("Por que a eficiência varia? (O Fator Tempo)")
-col_esq, col_centro, col_dir = st.columns([1, 2, 1])
+st.markdown("> **Insight:** API REST tem alta adoção com o menor tempo de implementação (mediana baixa).")
 
-with col_centro:
-    fig_box = boxplot_tempo(df_filtro)
-    fig_box.set_size_inches(5, 3)
-    st.pyplot(fig_box, use_container_width=True)
+st.markdown("---")
+st.header("4. Evolução Temporal")
+st.markdown("Comparativo de crescimento entre todas as tecnologias selecionadas.")
 
-st.markdown("> **Conclusão:** A API REST é mais eficiente porque é **mais rápida** de implementar (Mediana de 2.4 meses).")
-
+st.pyplot(grafico_evolucao_comparativo(df_filtro))
 
 st.markdown("---")
 st.header("5. Correlações e Fatores")
